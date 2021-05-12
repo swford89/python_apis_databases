@@ -20,6 +20,9 @@ import sqlalchemy
 import os
 from pprint import pprint
 
+from sqlalchemy.sql.expression import column
+from sqlalchemy.sql.sqltypes import Boolean
+
 def menu_select():
     """get user to choose their database task"""
 
@@ -41,15 +44,8 @@ def table_column_datatype():
     """get title for table and columns; get datatype for columns"""
 
     # initialize list for titles, datatypes
-    # initialize datatype selection menu
     column_titles_list = []
     column_datatype_list = []
-    datatype_dict = {
-        1: sqlalchemy.String(500),
-        2: sqlalchemy.Integer(),
-        3: sqlalchemy.Float(),
-        4: sqlalchemy.Boolean()
-    }
 
     # get the title of the table
     table_title = input('Enter a title for your table: ')
@@ -107,7 +103,7 @@ def table_column_datatype():
     return table_data_dict
 
 def create_table(table_data_dict):
-    """unpack values and create table"""
+    """use data stored as dictionary to create table"""
 
     column_args_list = []
 
@@ -121,13 +117,58 @@ def create_table(table_data_dict):
     metadata.create_all(engine)
     return  
 
+def insert_data():
+    """get user input and insert into table"""
+
+    field_list = []
+    table_title = input('Enter the name of the table you would like to add data to: ')
+
+    # initialize the necessary table
+    specific_table = sqlalchemy.Table(table_title, metadata, autoload=True, autoload_with=engine)
+
+    # print column titles and class object type to datatype this column requires  
+    for column in specific_table.columns:
+        print(f'''
+        Full Column: {column}
+        Column Title: {column.name}
+        Column Datatype: {column.type}
+        ''')
+
+        if isinstance(column.type, type(sqlalchemy.String())):                                                 # sqlalchemy.String() 
+            field_value = input(f'Enter a string value for column {column.name.upper()}: ')
+            field_list.append(field_value)
+        elif isinstance(column.type, type(sqlalchemy.Integer())):
+            field_value = int(input(f'Enter an integer value for column {column.name.upper()}: '))
+            field_list.append(field_value)
+        elif isinstance(column.type, type(sqlalchemy.Float())):
+            field_value = float(input(f'Enter the float value for column {column.name.upper()}: '))
+            field_list.append(field_value)
+        elif isinstance(column.type, type(sqlalchemy.Boolean())):
+            field_value = bool(input(f'Enter a boolean value for column {column.name.upper()}'))
+            field_list.append(field_value)
+
+    print(field_list)                
+    
+    insert_query = sqlalchemy.insert(specific_table).values()
+    # result_proxy = connection.execute(insert_query)
+    return
+
 # set up MYSQL database connection
 secret = os.environ['MYSQL_PASS']
 engine = sqlalchemy.create_engine(f'mysql+pymysql://root:{secret}@localhost/TravelCompany')
 connection = engine.connect()
 metadata = sqlalchemy.MetaData()
 
+# initialize datatype dict; global because multiple functions need to access it
+datatype_dict = {
+    1: sqlalchemy.String(),
+    2: sqlalchemy.Integer(),
+    3: sqlalchemy.Float(),
+    4: sqlalchemy.Boolean()
+}
+
 # call functions
-user_choice = menu_select()
-table_data_dict = table_column_datatype()
-create_table(table_data_dict)
+# user_choice = menu_select()
+# table_data_dict = table_column_datatype()
+# create_table(table_data_dict)
+insert_data()
