@@ -20,9 +20,6 @@ import sqlalchemy
 import os
 from pprint import pprint
 
-from sqlalchemy.sql.expression import column
-from sqlalchemy.sql.sqltypes import Boolean
-
 def menu_select():
     """get user to choose their database task"""
 
@@ -92,12 +89,18 @@ def table_column_datatype():
                 print('''
                 Please enter a valid number from the Datatype Menu
                 ''')
+    while True:
+        print(f'Column Titles: {column_titles_list}')
+        primary_key = input('Enter the title of the column you would like to set as the primary key: ')
+        if primary_key in column_titles_list:
+            break
 
     # create dictionary to use for table creation
     table_data_dict = {
         'table_title': table_title,
         'column_titles': column_titles_list,
         'column_datatypes': column_datatype_list,
+        'primary_key': primary_key
     }
     
     return table_data_dict
@@ -109,18 +112,23 @@ def create_table(table_data_dict):
 
     for num in range(len(table_data_dict['column_titles'])):
         column_set = sqlalchemy.Column(table_data_dict['column_titles'][num], table_data_dict['column_datatypes'][num])
-        column_args_list.append(column_set)
+        if table_data_dict['primary_key'] == column_set.name:
+            column_set = sqlalchemy.Column(table_data_dict['column_titles'][num], table_data_dict['column_datatypes'][num], primary_key=True)
+            column_args_list.append(column_set)
+        else:
+            column_args_list.append(column_set)
 
-    new_table = sqlalchemy.Table(
-        table_data_dict['table_title'], metadata, *column_args_list)
+    new_table = sqlalchemy.Table(table_data_dict['table_title'], metadata, *column_args_list)
     
     metadata.create_all(engine)
     return  
 
 def insert_data():
-    """get user input and insert into table"""
+    """for inserting a NEW record into our database"""
 
     field_list = []
+    column_title_list = []
+    column_field_dict = {}
     table_title = input('Enter the name of the table you would like to add data to: ')
 
     # initialize the necessary table
@@ -134,23 +142,57 @@ def insert_data():
         Column Datatype: {column.type}
         ''')
 
-        if isinstance(column.type, type(sqlalchemy.String())):                                                 # sqlalchemy.String() 
-            field_value = input(f'Enter a string value for column {column.name.upper()}: ')
-            field_list.append(field_value)
-        elif isinstance(column.type, type(sqlalchemy.Integer())):
-            field_value = int(input(f'Enter an integer value for column {column.name.upper()}: '))
-            field_list.append(field_value)
-        elif isinstance(column.type, type(sqlalchemy.Float())):
-            field_value = float(input(f'Enter the float value for column {column.name.upper()}: '))
-            field_list.append(field_value)
-        elif isinstance(column.type, type(sqlalchemy.Boolean())):
-            field_value = bool(input(f'Enter a boolean value for column {column.name.upper()}'))
-            field_list.append(field_value)
+        # get field values the user wants to enter in
+        while True:
+            try:
+                if isinstance(column.type, type(sqlalchemy.String())): 
+                    field_value = input(f'Enter a string value for column {column.name.upper()}: ')
+                    field_list.append(field_value)
+                    column_title_list.append(column.name)
+                    break
+                elif isinstance(column.type, type(sqlalchemy.Integer())):
+                    field_value = int(input(f'Enter an integer value for column {column.name.upper()}: '))
+                    field_list.append(field_value)
+                    column_title_list.append(column.name)
+                    break
+                elif isinstance(column.type, type(sqlalchemy.Float())):
+                    field_value = float(input(f'Enter the float value for column {column.name.upper()}: '))
+                    field_list.append(field_value)
+                    column_title_list.append(column.name)
+                    break
+                elif isinstance(column.type, type(sqlalchemy.Boolean())):
+                    field_value = bool(input(f'Enter a boolean value for column {column.name.upper()}'))
+                    field_list.append(field_value)
+                    column_title_list.append(column.name)
+                    break
+            except ValueError:
+                print('Looks like you entered in an invalid datatype. Try again.')
 
-    print(field_list)                
+    print(column_title_list)
+    print(field_list)
+
+    for index, title in enumerate(column_title_list):
+            column_field_dict[title] = field_list[index]
+
+    pprint(column_field_dict)                
     
-    insert_query = sqlalchemy.insert(specific_table).values()
-    # result_proxy = connection.execute(insert_query)
+    insert_query = sqlalchemy.insert(specific_table).values(**column_field_dict)
+    result_proxy = connection.execute(insert_query)
+    return
+
+def update_data():
+    """for updating an EXISTING record in our database"""
+
+    table_name = input('Enter the name of the table which contains your record: ')
+    specific_table = sqlalchemy.Table(table_name, metadata, autoload=True, autoload_with=engine)
+
+    print(f'{specific_table.columns.keys()}')
+    
+    column_title = input('Enter the name of the column you are updating: ')
+
+    update_query = sqlalchemy.update(specific_table).values()
+    # result_proxy = connection.execute(update_query)
+
     return
 
 # set up MYSQL database connection
@@ -161,7 +203,7 @@ metadata = sqlalchemy.MetaData()
 
 # initialize datatype dict; global because multiple functions need to access it
 datatype_dict = {
-    1: sqlalchemy.String(),
+    1: sqlalchemy.String(500),
     2: sqlalchemy.Integer(),
     3: sqlalchemy.Float(),
     4: sqlalchemy.Boolean()
@@ -169,6 +211,6 @@ datatype_dict = {
 
 # call functions
 # user_choice = menu_select()
-# table_data_dict = table_column_datatype()
-# create_table(table_data_dict)
+table_data_dict = table_column_datatype()
+create_table(table_data_dict)
 insert_data()
