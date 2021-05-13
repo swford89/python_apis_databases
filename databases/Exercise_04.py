@@ -44,10 +44,8 @@ def table_column_datatype():
     column_titles_list = []
     column_datatype_list = []
 
-    # get the title of the table
+    # define the table
     table_title = input('Enter a title for your table: ')
-
-    # get the number of columns this table needs
     while True:
         try:
             column_amount = int(input(f'Enter the number of columns table {table_title.upper()} needs: '))
@@ -74,7 +72,7 @@ def table_column_datatype():
                 # confirm user entered correct value      
                 if column_datatype in datatype_dict.keys():
                     print(f'''
-                    Confirmed: Column Title = {column.upper()} 
+                    Confirmed: Column title = {column.upper()} 
                     Confirmed: Datatype = {datatype_dict[column_datatype]}
                     ''')
                     # add the datetype to the list
@@ -90,7 +88,7 @@ def table_column_datatype():
                 Please enter a valid number from the Datatype Menu
                 ''')
     while True:
-        print(f'Column Titles: {column_titles_list}')
+        print(f'Column titles: {column_titles_list}')
         primary_key = input('Enter the title of the column you would like to set as the primary key: ')
         if primary_key in column_titles_list:
             break
@@ -119,8 +117,10 @@ def create_table(table_data_dict):
             column_args_list.append(column_set)
 
     new_table = sqlalchemy.Table(table_data_dict['table_title'], metadata, *column_args_list)
-    
     metadata.create_all(engine)
+    print('''
+    Table has successfuly been created.
+    ''')
     return  
 
 def insert_data():
@@ -134,12 +134,12 @@ def insert_data():
     # initialize the necessary table
     specific_table = sqlalchemy.Table(table_title, metadata, autoload=True, autoload_with=engine)
 
-    # print column titles and class object type to datatype this column requires  
+    # print column titles and class object type to promt user to choose datatype this column requires 
     for column in specific_table.columns:
         print(f'''
-        Full Column: {column}
-        Column Title: {column.name}
-        Column Datatype: {column.type}
+        Full column: {column}
+        Column title: {column.name}
+        Column datatype: {column.type}
         ''')
 
         # get field values the user wants to enter in
@@ -168,31 +168,41 @@ def insert_data():
             except ValueError:
                 print('Looks like you entered in an invalid datatype. Try again.')
 
-    print(column_title_list)
-    print(field_list)
-
     for index, title in enumerate(column_title_list):
             column_field_dict[title] = field_list[index]
 
-    pprint(column_field_dict)                
-    
+    pprint(f'Dictionary of column titles and values to insert: {column_field_dict}')                
+
     insert_query = sqlalchemy.insert(specific_table).values(**column_field_dict)
     result_proxy = connection.execute(insert_query)
+    print('''
+    Insert Complete.
+    ''')
     return
 
 def update_data():
     """for updating an EXISTING record in our database"""
 
+    # initialize the table
     table_name = input('Enter the name of the table which contains your record: ')
     specific_table = sqlalchemy.Table(table_name, metadata, autoload=True, autoload_with=engine)
 
-    print(f'{specific_table.columns.keys()}')
+    # define update
+
+
+    # define where
+
+
+    update_query = sqlalchemy.update(specific_table).values(somekey=somevalue).where(specific_table.columns.column)  ### code in proper arguments
+    result_proxy = connection.execute(update_query)
+    print('''
+    Update Complete.
+    ''')
+    return
+
+def select_data():
+    """for reading data from the database"""
     
-    column_title = input('Enter the name of the column you are updating: ')
-
-    update_query = sqlalchemy.update(specific_table).values()
-    # result_proxy = connection.execute(update_query)
-
     return
 
 # set up MYSQL database connection
@@ -209,8 +219,9 @@ datatype_dict = {
     4: sqlalchemy.Boolean()
 }
 
-# call functions
+## call functions
 # user_choice = menu_select()
-table_data_dict = table_column_datatype()
-create_table(table_data_dict)
-insert_data()
+# table_data_dict = table_column_datatype()
+# create_table(table_data_dict)
+# insert_data()
+update_data()
