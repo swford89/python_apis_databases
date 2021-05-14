@@ -244,7 +244,7 @@ def update_data():
                 break
 
     update_query = sqlalchemy.update(specific_table).values(**update_dict).where(
-        specific_table.columns.where_column == where_value)  ### AttributeError
+        specific_table.columns[where_column] == where_value)
     result_proxy = connection.execute(update_query)
     print('''
     Update Complete.
@@ -289,5 +289,5 @@ datatype_dict = {
 # table_data_dict = table_column_datatype()
 # create_table(table_data_dict)
 # insert_data()
-# update_data()
-select_data()
+update_data()
+# select_data()
