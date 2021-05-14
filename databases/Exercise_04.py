@@ -17,6 +17,7 @@ The more dynamic the application, the better!
 
 '''
 import sqlalchemy
+from sqlalchemy.exc import NoSuchTableError, NoSuchColumnError
 import os
 from pprint import pprint
 
@@ -119,7 +120,7 @@ def create_table(table_data_dict):
     new_table = sqlalchemy.Table(table_data_dict['table_title'], metadata, *column_args_list)
     metadata.create_all(engine)
     print('''
-    Table has successfuly been created.
+    Table has successfully been created.
     ''')
     return  
 
@@ -129,10 +130,17 @@ def insert_data():
     field_list = []
     column_title_list = []
     column_field_dict = {}
-    table_title = input('Enter the name of the table you would like to add data to: ')
 
     # initialize the necessary table
-    specific_table = sqlalchemy.Table(table_title, metadata, autoload=True, autoload_with=engine)
+    while True:
+        try:
+            table_title = input('Enter the name of the table you would like to add data to: ')
+            specific_table = sqlalchemy.Table(table_title, metadata, autoload=True, autoload_with=engine)
+            break
+        except NoSuchTableError:
+            print('''
+            Your table either does not exist or is not spelled correctly. Try again.
+            ''')
 
     # print column titles and class object type to promt user to choose datatype this column requires 
     for column in specific_table.columns:
@@ -184,16 +192,59 @@ def update_data():
     """for updating an EXISTING record in our database"""
 
     # initialize the table
-    table_name = input('Enter the name of the table which contains your record: ')
-    specific_table = sqlalchemy.Table(table_name, metadata, autoload=True, autoload_with=engine)
+    while True:
+        try:
+            table_name = input('Enter the name of the table which contains your record: ')
+            specific_table = sqlalchemy.Table(table_name, metadata, autoload=True, autoload_with=engine)
+            break
+        except NoSuchTableError:
+            print('''
+            Your table either does not exist or is not spelled correctly. Try again.
+            ''')
 
-    # define update
+    # define update data
+    print(f'Column titles: {specific_table.columns.keys()}')
+    update_column = input('Enter your update column: ')
 
+    for column in specific_table.columns:
+        while True:
+            try:
+                if update_column == column.name and isinstance(column.type, type(sqlalchemy.String())):
+                    update_value = input('Enter your updated string value: ')
+                elif update_column == column.name and isinstance(column.type, type(sqlalchemy.Integer())):
+                    update_value = int(input('Enter your updated integer value: '))
+                elif update_column == column.name and isinstance(column.type, type(sqlalchemy.Float())):
+                    update_value = int(input('Enter your updated float value: '))
+                elif update_column == column.name and isinstance(column.type, type(sqlalchemy.Boolean())):
+                    update_value = int(input('Enter your updated boolean value: '))
+            except ValueError:
+                print('Looks like an invalid datatype was entered. Try again.')
+            else:
+                break
+    update_dict = {update_column: update_value}
 
-    # define where
+    # define where filter
+    print(f'Column titles: {specific_table.columns.keys()}')
+    where_column = input('Enter your where column: ')
 
+    for column in specific_table.columns:
+        while True:
+            try:
+                if column.name == where_column and isinstance(column.type, type(sqlalchemy.String())):
+                    where_value = input('Enter your where-filter string value: ')
+                elif column.name == where_column and isinstance(column.type, type(sqlalchemy.Integer())):
+                    where_value = input('Enter your where-filter integer value: ')
+                elif column.name == where_column and isinstance(column.type, type(sqlalchemy.Float())):
+                    where_value = input('Enter your where-filter float value: ')
+                elif column.name == where_column and isinstance(column.type, type(sqlalchemy.Boolean())):
+                    where_value = input('Enter your where-filter boolean value: ')
+            except ValueError:
+                    print('Looks like an invalid datatype was entered. Try again.')
+            else:
+                break
 
-    update_query = sqlalchemy.update(specific_table).values(somekey=somevalue).where(specific_table.columns.column)  ### code in proper arguments
+    update_query = sqlalchemy.update(specific_table).values(**update_dict).where(
+        specific_table.columns.where_column == where_value)  ### AttributeError
     result_proxy = connection.execute(update_query)
     print('''
     Update Complete.
@@ -203,6 +254,20 @@ def update_data():
 def select_data():
     """for reading data from the database"""
     
+    while True:
+        try:
+            table_name = input('Enter the name of the table you would like to read from: ')
+            specific_table = sqlalchemy.Table(table_name, metadata, autoload=True, autoload_with=engine)
+            break
+        except NoSuchTableError:
+            print('''
+            Your table either does not exist or is not spelled correctly. Try again.
+            ''')
+
+    query = sqlalchemy.select([specific_table])
+    result_proxy = connection.execute(query)
+    result_set = result_proxy.fetchall()
+    pprint(result_set)
     return
 
 # set up MYSQL database connection
@@ -224,4 +289,5 @@ datatype_dict = {
 # table_data_dict = table_column_datatype()
 # create_table(table_data_dict)
 # insert_data()
-update_data()
+# update_data()
+select_data()
