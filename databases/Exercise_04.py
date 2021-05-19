@@ -214,9 +214,9 @@ def update_data():
                 elif update_column == column.name and isinstance(column.type, type(sqlalchemy.Integer())):
                     update_value = int(input('Enter your updated integer value: '))
                 elif update_column == column.name and isinstance(column.type, type(sqlalchemy.Float())):
-                    update_value = int(input('Enter your updated float value: '))
+                    update_value = float(input('Enter your updated float value: '))
                 elif update_column == column.name and isinstance(column.type, type(sqlalchemy.Boolean())):
-                    update_value = int(input('Enter your updated boolean value: '))
+                    update_value = bool(input('Enter your updated boolean value: '))
             except ValueError:
                 print('Looks like an invalid datatype was entered. Try again.')
             else:
@@ -233,11 +233,11 @@ def update_data():
                 if column.name == where_column and isinstance(column.type, type(sqlalchemy.String())):
                     where_value = input('Enter your where-filter string value: ')
                 elif column.name == where_column and isinstance(column.type, type(sqlalchemy.Integer())):
-                    where_value = input('Enter your where-filter integer value: ')
+                    where_value = int(input('Enter your where-filter integer value: '))
                 elif column.name == where_column and isinstance(column.type, type(sqlalchemy.Float())):
-                    where_value = input('Enter your where-filter float value: ')
+                    where_value = float(input('Enter your where-filter float value: '))
                 elif column.name == where_column and isinstance(column.type, type(sqlalchemy.Boolean())):
-                    where_value = input('Enter your where-filter boolean value: ')
+                    where_value = bool(input('Enter your where-filter boolean value: '))
             except ValueError:
                     print('Looks like an invalid datatype was entered. Try again.')
             else:
